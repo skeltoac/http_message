@@ -1,0 +1,3 @@
+http_message - An Ejabberd module for routing messages received as HTTP POSTs.
+
+Having a web server talk XMPP just to post a message to XMPP is excruciatingly inefficient in developer, machine, and user time. So I wrote an Ejabberd module that accepts an HTTP POST with Basic Auth and passes the message directly the XMPP router. It's simple, easy, and about as efficient as it could be.
