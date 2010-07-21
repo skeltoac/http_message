@@ -94,7 +94,7 @@ extract_addresses({xmlelement, "message", Atts, Els}) ->
 send(From, To, Message) ->
     case ejabberd_router:route(jlib:string_to_jid(From), jlib:string_to_jid(To), Message) of
 	ok ->
-	    {200, [], "OK"};
+	    {200, [], "OK\n"};
 	Other ->
 	    {500, [], io_lib:format("Internal server error: unexpected router response:~n~p~n", [Other])}
     end.
