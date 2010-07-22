@@ -8,20 +8,20 @@
 -compile(export_all).
 
 process(_Path, Request)->
-    process_auth(Request).
+    process_method(Request).
+
+process_method(#request{method = 'POST'} = Request) ->
+    process_auth(Request);
+process_method(_) ->
+    {405, [{"Allow", "POST"}], "Method not allowed. Use POST."}.
 
 process_auth(#request{auth = Auth} = Request) ->
     case check_auth(Auth) of
 	{User, Domain} ->
-	    process_method(Request#request{auth = User++"@"++Domain});
+	    process_data(Request#request{auth = User++"@"++Domain});
 	_ ->
 	    {401, [{"WWW-Authenticate", "basic realm=\"XMPP\""}], "Unauthorized. Use your Jabber ID (user@domain.com) and password.\n"}
     end.
-
-process_method(#request{method = 'POST'} = Request) ->
-    process_data(Request);
-process_method(_) ->
-    {405, [{"Allow", "POST"}], "Method not allowed. Use POST."}.
 
 process_data(#request{data = Data} = Request) ->
     %% TODO: Reduce parser spawn. xml_stream:parse_element always opens a new port. Use a single port or a pool of them.
