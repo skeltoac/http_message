@@ -1,3 +1,37 @@
 http_message - An Ejabberd module for routing messages received as HTTP POSTs.
 
-Having a web server talk XMPP just to post a message to XMPP is excruciatingly inefficient in developer, machine, and user time. So I wrote an Ejabberd module that accepts an HTTP POST with Basic Auth and passes the message directly the XMPP router. It's simple, easy, and about as efficient as it could be.
+Having a web server talk XMPP just to post a message to XMPP is excruciatingly inefficient in developer, machine, and user time. This is an Ejabberd module that accepts an HTTP POST with Basic Auth and passes the message directly the XMPP router. It's simple, easy, and about as efficient as it could be.
+
+Features
+
+Forge Sender: The module allows privileged users to send messages from arbitrary JIDs. The specified JID doesn't have to be an existing account; it doesn't even have to be on a real domain. Caveat emptor: know thy protocol, this is not standard; messages sent S2S will be discarded by the remote server if the domain doesn't match.
+<message to="friend@example.com" from="deus@machina">
+<body>Hello, world!</body>
+</message>
+
+Multicast: The module includes a stripped-down, non-compliant XEP-0033 multicast implementation. If your message has to="multicast" it will check the multicast ACL and then send the message, minus the addresses, to all recipients specified. This is essentially a BCC-only multicast service.
+<message to="multicast">
+<addresses>
+<address jid="friend@example.com"/>
+<address jid="buddy@example.com"/>
+</addresses>
+<body>Hello, world!</body>
+</message>
+
+Installation
+
+1. Compile and install the beam file in your ejabberd ebin directory. The included Makefile is configured for ejabberd installed in /lib/ejabberd; if that matches your system, simply `make install`.
+
+2. Add ACLs. Start with these:
+http_message [{allow, local}]
+multicast [{allow, admin}]
+forge_sender [{allow, admin}]
+
+3. Add request handlers to the HTTP/HTTPS listener(s).
+{request_handlers,
+  [{["message"], http_message}]}
+
+4. If you did steps 2 & 3 in the config file, restart ejabberd. If you did them in the web admin panels, you don't have to restart.
+
+5. Check it out. Browse to /message on your ejabberd server's HTTP/HTTPS port; it should report an error about "Method not allowed." Use curl to send a message:
+curl https://example.com:5284/message -u user@example.com --data-binary '<message to="friend@example.com"><body>Hello, world!</body></message>'
