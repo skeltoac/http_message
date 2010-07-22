@@ -15,12 +15,20 @@ process_method(#request{method = 'POST'} = Request) ->
 process_method(_) ->
     {405, [{"Allow", "POST"}], "Method not allowed. Use POST."}.
 
-process_auth(#request{auth = Auth} = Request) ->
-    case check_auth(Auth) of
+process_auth(Request) ->
+    case check_auth(Request#request.auth) of
 	{User, Domain} ->
-	    process_data(Request#request{auth = User++"@"++Domain});
+	    process_access(Request#request{auth = User++"@"++Domain});
 	_ ->
 	    {401, [{"WWW-Authenticate", "basic realm=\"XMPP\""}], "Unauthorized. Use your Jabber ID (user@domain.com) and password.\n"}
+    end.
+
+process_access(Request) ->
+    case acl:match_rule(global, http_message, jlib:string_to_jid(Request#request.auth)) of
+	allow ->
+	    process_data(Request);
+	_ ->
+	    {403, [], "Forbidden: the authenticated user does not have permission to use this API.\n"}
     end.
 
 process_data(#request{data = Data} = Request) ->
